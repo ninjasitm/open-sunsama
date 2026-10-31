@@ -66,6 +66,12 @@ export interface UserPreferences {
    * struck through) or are hidden. Defaults to true.
    */
   showDeclinedEvents?: boolean;
+
+  /**
+   * Whether the calendar beside the board draws dotted "projected" blocks
+   * for open tasks that have no time block yet. Defaults to true.
+   */
+  showProjectedTasks?: boolean;
 }
 
 /**
