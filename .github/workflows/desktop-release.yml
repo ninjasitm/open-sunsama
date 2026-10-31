@@ -60,8 +60,15 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
     timeout-minutes: 60
+    # Forks without the release secrets still build: each part is skipped when its secret is missing,
+    # and the installers stay downloadable as workflow artifacts.
+    env:
+      DISTRIBUTE: ${{ secrets.RELEASE_SECRET != '' }}
+      APPLE_SIGNING: ${{ secrets.APPLE_CERTIFICATE != '' }}
+      UPDATER_SIGNING: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY != '' }}
     outputs:
       version: ${{ steps.version.outputs.version }}
+      distribute: ${{ env.DISTRIBUTE }}
     
     steps:
       - name: Checkout
@@ -73,6 +80,9 @@ jobs:
         run: |
           if [ -n "${{ github.event.inputs.version }}" ]; then
             echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref_type }}" != "tag" ]; then
+            # Manual run on a branch without a version: build whatever the app says it is.
+            echo "version=$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').version")" >> $GITHUB_OUTPUT
           else
             echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
           fi
@@ -106,7 +116,7 @@ jobs:
 
       # macOS: Import Apple Developer Certificate for code signing
       - name: Import Apple Developer Certificate
-        if: matrix.platform == 'macos-latest'
+        if: matrix.platform == 'macos-latest' && env.APPLE_SIGNING == 'true'
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -123,7 +133,7 @@ jobs:
 
       # macOS: Get signing identity from imported certificate
       - name: Get Signing Identity
-        if: matrix.platform == 'macos-latest'
+        if: matrix.platform == 'macos-latest' && env.APPLE_SIGNING == 'true'
         id: signing
         run: |
           IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | head -1 | awk -F'"' '{print $2}')
@@ -160,7 +170,15 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           VITE_API_URL: ${{ env.API_URL }}
           VITE_WS_URL: wss://api.opensunsama.com
-        run: bunx tauri build ${{ matrix.args }} --verbose
+        run: |
+          # Without a certificate, build an unsigned app instead of signing with an empty identity.
+          [ "$APPLE_SIGNING" = "true" ] || unset APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID
+          EXTRA=()
+          if [ "$UPDATER_SIGNING" != "true" ]; then
+            unset TAURI_SIGNING_PRIVATE_KEY TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+            EXTRA=(--config '{"bundle":{"createUpdaterArtifacts":false}}')
+          fi
+          bunx tauri build ${{ matrix.args }} --verbose "${EXTRA[@]}"
 
       # macOS: Verify entitlements are embedded in the signed app
       - name: Verify entitlements (macOS)
@@ -185,7 +203,15 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           VITE_API_URL: ${{ env.API_URL }}
           VITE_WS_URL: wss://api.opensunsama.com
-        run: bunx tauri build ${{ matrix.args }}
+        shell: bash
+        run: |
+          # Without the updater key, skip updater artifacts; Tauri refuses to build them unsigned.
+          EXTRA=()
+          if [ "$UPDATER_SIGNING" != "true" ]; then
+            unset TAURI_SIGNING_PRIVATE_KEY TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+            EXTRA=(--config '{"bundle":{"createUpdaterArtifacts":false}}')
+          fi
+          bunx tauri build ${{ matrix.args }} "${EXTRA[@]}"
 
       - name: Find built file
         id: find_file
@@ -271,6 +297,7 @@ jobs:
           echo "sha256=$(sha256sum "$FILE" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
       - name: Upload to S3
+        if: env.DISTRIBUTE == 'true'
         shell: bash
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -299,6 +326,7 @@ jobs:
           fi
 
       - name: Register release with API
+        if: env.DISTRIBUTE == 'true'
         shell: bash
         run: |
           # Build updater URL if updater file exists
@@ -325,7 +353,7 @@ jobs:
             }"
 
       - name: Register Debian release with API
-        if: matrix.platform == 'ubuntu-22.04'
+        if: matrix.platform == 'ubuntu-22.04' && env.DISTRIBUTE == 'true'
         shell: bash
         run: |
           curl --fail -X POST "${{ env.API_URL }}/releases" \
@@ -358,7 +386,7 @@ jobs:
   verify:
     needs: build
     runs-on: ubuntu-latest
-    if: always()
+    if: always() && needs.build.outputs.distribute == 'true'
 
     steps:
       - name: Check every platform serves this version
