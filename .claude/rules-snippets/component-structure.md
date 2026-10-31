@@ -1,0 +1,6 @@
+- Group components by feature folder under `apps/web/src/components/` (for example `kanban/`, `calendar/`); shared primitives live in `components/ui/`.
+- Follow the function-component pattern with typed props, and Radix UI primitives for behavior, for all components.
+- Use clear and descriptive naming for props, events, and methods.
+- Keep logic within components focused and manageable.
+- Add code comments for complex logic or non-obvious implementations.
+- Use bracketed identifiers for logs: `[ComponentName]: message`.

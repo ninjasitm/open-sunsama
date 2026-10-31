@@ -1,0 +1,11 @@
+---
+description: Rules for separating server and client code
+globs:
+alwaysApply: agent
+---
+
+# Server-Client Separation
+
+Never import server-only code in client components; use API endpoints for cross-boundary access.
+
+**CRITICAL: READ:** [.claude/rules-snippets/server-client-separation.md](../../.claude/rules-snippets/server-client-separation.md)

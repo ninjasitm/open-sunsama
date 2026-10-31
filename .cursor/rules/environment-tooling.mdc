@@ -1,0 +1,11 @@
+---
+description: Development environment and tooling standards
+globs:
+alwaysApply: agent
+---
+
+# Environment & Tooling
+
+OS-aware commands, package manager usage, and tooling conventions.
+
+**CRITICAL: READ:** [.claude/rules-snippets/environment-tooling.md](../../.claude/rules-snippets/environment-tooling.md)

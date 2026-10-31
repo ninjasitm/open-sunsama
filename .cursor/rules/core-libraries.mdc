@@ -1,0 +1,11 @@
+---
+description: Core libraries and frameworks used in open-sunsama
+globs:
+alwaysApply: agent
+---
+
+# Core Libraries
+
+Utility, state management, styling, and UI library conventions.
+
+**CRITICAL: READ:** [.claude/rules-snippets/core-libraries.md](../../.claude/rules-snippets/core-libraries.md)

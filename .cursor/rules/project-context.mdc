@@ -1,0 +1,11 @@
+---
+description: Project documentation and context review requirements
+globs:
+alwaysApply: agent
+---
+
+# Project Context
+
+Review project documentation and context before generating code.
+
+**CRITICAL: READ:** [.claude/rules-snippets/project-context.md](../../.claude/rules-snippets/project-context.md)

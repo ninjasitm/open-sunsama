@@ -1,0 +1,11 @@
+---
+description: API development and server-side implementation guidelines
+globs:
+alwaysApply: agent
+---
+
+# API Server
+
+API route patterns, input validation, response formats, and documentation standards.
+
+**CRITICAL: READ:** [.claude/rules-snippets/api-server.md](../../.claude/rules-snippets/api-server.md)

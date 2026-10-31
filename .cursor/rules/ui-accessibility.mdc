@@ -1,0 +1,11 @@
+---
+description: UI accessibility and responsive design principles
+globs:
+alwaysApply: agent
+---
+
+# UI Accessibility
+
+Mobile-first development with WCAG 2.1 AA compliance, semantic HTML, and keyboard navigation.
+
+**CRITICAL: READ:** [.claude/rules-snippets/ui-accessibility.md](../../.claude/rules-snippets/ui-accessibility.md)

@@ -1,0 +1,17 @@
+---
+description: "Improve code quality and structure while keeping all tests passing. Part of the TDD red-green-refactor cycle."
+mode: subagent
+permissions:
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: allow
+---
+
+# Refactor Agent (TDD — Improve Code Quality)
+
+Improve code quality and structure while keeping all tests passing. Part of the TDD red-green-refactor cycle.
+
+Read and follow `.claude/agents-snippets/refactor.md` before performing this role.

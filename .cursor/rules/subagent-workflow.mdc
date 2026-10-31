@@ -1,0 +1,11 @@
+---
+description: Orchestrator-first subagent workflow for multi-step development tasks
+globs:
+alwaysApply: agent
+---
+
+# Subagent Workflow
+
+Orchestrator-first flow for multi-step tasks with domain specialist routing and parallelization.
+
+**CRITICAL: READ:** [.claude/rules-snippets/subagent-workflow.md](../../.claude/rules-snippets/subagent-workflow.md)

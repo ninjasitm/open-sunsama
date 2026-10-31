@@ -1,0 +1,23 @@
+---
+name: feature-builder
+description: "Coordinate end-to-end feature development using subagents for planning, implementation, and review. Orchestrates the full development lifecycle."
+tools: ["Read", "Grep", "Write", "Edit", "Bash(*)", "agent"]
+agents:
+  [
+    "Planner",
+    "Implementer",
+    "Reviewer",
+    "Researcher",
+    "Backend Architect",
+    "Frontend Developer",
+    "API Specialist",
+    "Admin Portal",
+    "Documenter",
+  ]
+---
+
+# Feature Builder — Coordinator Agent
+
+Coordinate end-to-end feature development by delegating to specialized subagents.
+
+**CRITICAL: READ:** [.claude/agents-snippets/feature-builder.md](../agents-snippets/feature-builder.md)

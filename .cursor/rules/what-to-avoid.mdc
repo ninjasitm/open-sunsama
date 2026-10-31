@@ -1,0 +1,11 @@
+---
+description: Deprecated patterns and anti-practices to avoid
+globs:
+alwaysApply: agent
+---
+
+# What to Avoid
+
+No deprecated features, global CSS, direct DOM manipulation, or duplicated logic.
+
+**CRITICAL: READ:** [.claude/rules-snippets/what-to-avoid.md](../../.claude/rules-snippets/what-to-avoid.md)

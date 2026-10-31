@@ -1,0 +1,11 @@
+---
+description: TypeScript and Hono and React development standards
+globs:
+alwaysApply: agent
+---
+
+# Coding Standards
+
+All code must follow project coding standards and patterns.
+
+**CRITICAL: READ:** [.claude/rules-snippets/coding-standards.md](../../.claude/rules-snippets/coding-standards.md)
