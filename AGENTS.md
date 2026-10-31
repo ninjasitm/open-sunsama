@@ -4,6 +4,8 @@ AI-agent-friendly task management + time blocking app. TypeScript monorepo with 
 
 Follow [DESIGN.md](DESIGN.md) for the compact workspace design tokens, component measurements, themes, and interaction rules.
 
+Agent orchestration, conduct, skills, and tracker context: see [Agent Workflow](#agent-workflow) at the end of this file.
+
 ## Testing
 
 **Use Cursor browser tool for UI testing.**
@@ -47,7 +49,8 @@ opensunsama/
 │   ├── api/        # Hono REST API (port 3001)
 │   ├── web/        # React + Vite SPA (port 3000)
 │   ├── desktop/    # Tauri v2 wrapper
-│   └── mobile/     # Expo React Native
+│   ├── mobile/     # Tauri v2 iOS and Android shell
+│   └── expo-mobile/ # Expo SDK 57 (Expo Router, EAS)
 ├── packages/
 │   ├── database/   # Drizzle ORM + PostgreSQL
 │   ├── types/      # Shared TypeScript types
@@ -101,7 +104,11 @@ opensunsama/
 
 ### Mobile (`apps/mobile`)
 
-**Expo 52** | Expo Router | Tab navigation (Tasks, Calendar, Settings).
+**Tauri v2** | iOS and Android shell around the web app | Native plugins: haptics, biometrics, deep links, notifications.
+
+### Expo Mobile (`apps/expo-mobile`)
+
+**Expo SDK 57** | Expo Router | EAS build and submit | Tab navigation (Tasks, Calendar, Settings).
 
 ---
 
@@ -150,7 +157,7 @@ E2E test of the OAuth flow against a local API: `MCP_E2E_API_URL=http://localhos
 
 ```bash
 bun install          # Install deps
-bun dev              # Start all dev servers
+bun run dev:local   # Local dev: API :3001 + web :3000 (safe; no Docker)
 bun run build        # Build all
 bun run typecheck    # Type check
 bun run lint         # Lint
@@ -163,10 +170,12 @@ bun run db:migrate   # Run migrations
 bun run db:push      # Push schema (scratch databases only; skips the migration history)
 bun run db:studio    # Drizzle Studio
 
-# Per-app
+# Per-app (the API dev script loads apps/api/.env, which points at production; use dev:local for local work)
 bun run --filter=@open-sunsama/api dev
 bun run --filter=@open-sunsama/web dev
 ```
+
+`bun dev` is not a local-work command: it starts every dev server, and the API loads `apps/api/.env` through `dotenv/config`, which points at production. Use `bun run dev:local`.
 
 ---
 
@@ -411,3 +420,109 @@ PG Boss has built-in recovery mechanisms:
 ## License
 
 Non-Commercial License. Commercial use requires enterprise license.
+
+---
+
+## Agent Workflow
+
+Orchestration, agent conduct, skills, and tracker context from the agent toolkit. The project rules above take precedence for PR and merge flow and for the no-Docker and production-database rules in Testing.
+
+Policy lives in `.claude/rules-snippets/`, `.claude/prompt-snippets/`, and `.claude/agents-snippets/`. The harness folders (`.claude/`, `.cursor/`, `.github/`, `.opencode/`, `.codex/`) hold thin wrappers that link to those snippets. Edit the snippet first.
+
+### Orientation to Recent Work
+
+Before a non-trivial task, read the recent commits (`git log --oneline -20`) and follow the [orient-to-recent-work](.agents/skills/orient-to-recent-work/SKILL.md) protocol. There is no CHANGELOG.md yet, so skip that step. Skip orientation for typos, version bumps, isolated docs, and mechanical refactors.
+
+### Project Management
+
+- **Tracker:** GitHub Issues
+- **Repository:** `ninjasitm/open-sunsama` (`origin`)
+- **URL:** https://github.com/ninjasitm/open-sunsama/issues
+- **Issue keys:** `#<number>`; reference them in commits as `[#123]`
+- **Tool access:** the [issue-tracker](.agents/skills/issue-tracker/SKILL.md) skill (strategy and fallbacks) and the [gh-cli](.agents/skills/gh-cli/SKILL.md) skill (command reference)
+
+### Agent Conduct
+
+Full rules: [agent-conduct](.claude/rules-snippets/agent-conduct.md). In short:
+
+- Stop and ask when a task lacks acceptance criteria, inputs, or expected outputs. State assumptions before high-impact changes.
+- Ask before changing files outside the task's scope, and before adding or upgrading dependencies.
+- Never silently change database schemas, API contracts, or auth flows.
+- Never modify `packages/*` without checking the apps that import them.
+- Prefer reversible changes when you are not sure.
+
+### ⚠️ CRITICAL: Orchestration Checkpoint (READ FIRST)
+
+If the work spans two or more of research, planning, implementation, testing, or review, start with a coordinator:
+
+- **Features** (research, plan, build, review): Feature Builder.
+- **Behavior-driven work** that needs red-green-refactor: TDD.
+- **Single-file edits and quick fixes:** do them directly.
+- **Independent tasks in different files:** run them in parallel (`dispatching-parallel-agents`).
+- **Before calling work done:** run review (`requesting-code-review`) and verification (`verification-before-completion`).
+
+For cross-app changes, research each app's boundaries first, change shared packages before the apps that use them, and review the impact on every consumer.
+
+### Skills
+
+Skills live in `.agents/skills/`. Codex and OpenCode read them natively; Claude Code, Copilot, and Cursor use them through the wrappers. Install skills by name, one at a time, and only with approval.
+
+| Need                            | Skills                                                                                                                                                             |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Plan and execute                | `brainstorming`, `writing-plans`, `executing-plans`, `subagent-driven-development`, `dispatching-parallel-agents`                                                  |
+| Build with quality              | `test-driven-development`, `systematic-debugging`, `debugger`, `code-simplifier`, `logging`, `security-reviewer`                                                   |
+| Review                          | `requesting-code-review`, `receiving-code-review`, `verification-before-completion`                                                                                |
+| Project context                 | `orient-to-recent-work`, `issue-tracker`, `gh-cli`, `project-documentation`, `using-git-worktrees`, `finishing-a-development-branch`                               |
+| Stack                           | `vercel-react-best-practices`, `web-design-guidelines`, `tanstack-query`, `tailwind`, `zod`, `vitest`, `playwright`, `typescript`, `expo-router`, `eas-app-stores` |
+| Feature pipeline                | `factory` (opt-in, see Factory)                                                                                                                                    |
+| Meta                            | `writing-skills`, `using-superpowers`                                                                                                                              |
+| Ponytail (lazy senior dev mode) | `ponytail`, `ponytail-review`, `ponytail-audit`, `ponytail-debt`, `ponytail-gain`, `ponytail-help`                                                                 |
+
+### Custom Agents
+
+Agent definitions live in `.claude/agents/`, `.github/agents/`, `.cursor/agents/`, and `.opencode/agents/` (sources in `.claude/agents-snippets/`). Coordinators dispatch the others. Route by domain:
+
+| Domain                                            | Agent              |
+| ------------------------------------------------- | ------------------ |
+| Hono routes, services, database                   | Backend Architect  |
+| Web UI (React, Radix, Tailwind)                   | Frontend Developer |
+| API contracts, `docs/api/`, versioning            | API Specialist     |
+| Health checks, PG Boss jobs, rollover, operations | Admin Portal       |
+| AGENTS.md, READMEs, ADRs                          | Documenter         |
+| Anything else in code                             | Implementer        |
+
+Reviewer and Researcher are read-only.
+
+### Factory (opt-in)
+
+`/factory <request>` runs intake, spec, plan, build, review, approval, and merge for feature-sized work. It is opt-in and changes nothing else. See [factory/README.md](factory/README.md). Builds run in `.worktrees/<id>/` on branch `factory/<id>`. Feature docs go in `apps/<app>/docs/features/`, or in `docs/features/` for cross-app work. Approval is human by default. Review lenses: `code, security, ux, ui`; `ux` and `ui` need a browser tool.
+
+### Filtered Commands (one workspace)
+
+The root commands above cover every workspace. Filter one with Turborepo:
+
+```bash
+bunx turbo run test --filter=@open-sunsama/api
+bunx turbo run build --filter=@open-sunsama/web
+bunx turbo run lint --filter=@open-sunsama/utils
+bunx turbo run typecheck --filter=@open-sunsama/database
+```
+
+Workspace names: `@open-sunsama/api`, `web`, `desktop`, `mobile`, `expo-mobile`, `database`, `types`, `api-client`, `utils`, `mcp`.
+
+For local development, use `bun run dev:local` (see Commands).
+
+Ports: API 3001 and web 3000 (`API_PORT`, `WEB_PORT`). The desktop app loads the web dev server on port 3000. Expo runs its own dev server.
+
+### Documentation
+
+Docs ship in the same commit as the change. Full rules: [documentation](.claude/rules-snippets/documentation.md).
+
+- Feature docs: `apps/<app>/docs/features/<KEY>-<slug>/` (spec and plan); `docs/features/` for changes that span apps.
+- Fixes: a line in `apps/<app>/docs/fixes/YYYY-MM.md`, or a folder for complex fixes.
+- Architecture decisions: `docs/architecture/`. API reference: `docs/api/`.
+- User-facing changes: `apps/web/src/content/docs/`.
+
+### OpenCode
+
+This project runs OpenCode v2.0.23. Native V2 loads this `AGENTS.md` automatically. Config `instructions` entries and `@refs` are not injected, so read the linked snippet whenever a rule in `.opencode/rules/` points at it.

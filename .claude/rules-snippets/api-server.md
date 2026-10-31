@@ -1,0 +1,5 @@
+- Hono route modules live in `apps/api/src/routes/` (one file per resource), registered in `apps/api/src/index.ts`.
+- Validate all input data before processing.
+- Return consistent response formats.
+- Use proper HTTP status codes.
+- Document API endpoints in `docs/api/` and the Routes table in AGENTS.md.

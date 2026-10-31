@@ -1,0 +1,12 @@
+---
+name: tdd
+description: "Implement a feature using test-driven development with red-green-refactor cycle. Coordinates specialized subagents for writing failing tests, implementing code, and refactoring."
+tools: ["Read", "Grep", "Write", "Edit", "Bash(*)", "agent"]
+agents: ["Red", "Green", "Refactor"]
+---
+
+# TDD Coordinator Agent
+
+Coordinate test-driven development with red-green-refactor cycle using specialized subagents.
+
+**CRITICAL: READ:** [.claude/agents-snippets/tdd.md](../agents-snippets/tdd.md)

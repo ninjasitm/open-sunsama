@@ -1,0 +1,12 @@
+---
+name: implementer
+description: "Implement code changes for a specific task. Follow TDD, write tests alongside code, and self-review before reporting completion."
+tools: ["Read", "Grep", "Glob", "Write", "Edit", "Bash(*)"]
+user-invocable: false
+---
+
+# Implementer Agent
+
+Write production-quality code for a specific task, following TDD and self-reviewing before completion.
+
+**CRITICAL: READ:** [.claude/agents-snippets/implementer.md](../agents-snippets/implementer.md)

@@ -1,0 +1,14 @@
+---
+applyTo: "**/*"
+description: "Monorepo documentation standards for features and fixes"
+---
+
+# Monorepo Documentation Guidelines
+
+Follow the rules defined in [.claude/rules-snippets/documentation.md](../../.claude/rules-snippets/documentation.md).
+
+Key points:
+- **Distributed strategy** — App-specific docs live in `apps/{{APP_NAME}}/docs/`; root `docs/` is only for monorepo-wide concerns (`docs/architecture/`, `docs/*.md` guides such as `docs/RAILWAY_SETUP.md`, and `docs/constitution.md` once it exists).
+- **Docs app sync required** — Every commit that changes user-facing behavior must update `apps/web/src/content/docs/` before committing.
+- **Pre-commit gate** — Documentation MUST be written or updated BEFORE committing code. Features need spec + plan in `apps/{{APP_NAME}}/docs/features/{{ISSUE_ID}}-{{FEATURE_NAME}}/`; fixes go in monthly logs; breaking changes update CHANGELOG.md.
+- **No individual fix files for simple bugs** — Use `apps/{{APP_NAME}}/docs/fixes/{{YYYY-MM}}.md` monthly logs instead.

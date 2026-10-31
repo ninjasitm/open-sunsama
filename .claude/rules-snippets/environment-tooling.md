@@ -1,0 +1,4 @@
+- Tailor commands to the user's OS and shell.
+- Use `bun` for package management.
+- Start local development with `bun run dev:local` (API on :3001, web on :3000, dev database). Never start a local API from `apps/api/.env`: it points at production.
+- No Docker for local development or tests; see the Testing section of AGENTS.md.

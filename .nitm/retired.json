@@ -1,0 +1,6 @@
+{
+  "retired": [
+    { "path": "apps/app-template", "reason": "Toolkit scaffold for new apps; apps are written by hand in this repo", "date": "2026-10-31" },
+    { "path": "packages/package-template", "reason": "Toolkit scaffold for new packages; packages are written by hand in this repo", "date": "2026-10-31" }
+  ]
+}

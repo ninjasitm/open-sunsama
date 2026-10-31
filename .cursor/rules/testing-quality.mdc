@@ -1,0 +1,11 @@
+---
+description: Testing and code quality guidelines
+globs:
+alwaysApply: agent
+---
+
+# Testing & Quality
+
+Lint, test, and build must pass before committing; use appropriate test frameworks.
+
+**CRITICAL: READ:** [.claude/rules-snippets/testing-quality.md](../../.claude/rules-snippets/testing-quality.md)

@@ -1,0 +1,10 @@
+---
+title: Monorepo Logging Standards
+description: Structured logging conventions across apps and packages
+---
+
+# Monorepo Logging Standards
+
+Structured logging with app/package context, correlation IDs, and shared logger patterns.
+
+**CRITICAL: READ:** [.claude/rules-snippets/logging.md](../../.claude/rules-snippets/logging.md)

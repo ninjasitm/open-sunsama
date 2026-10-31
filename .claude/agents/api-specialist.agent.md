@@ -1,0 +1,11 @@
+---
+name: api-specialist
+description: "Design and implement API architecture, documentation, and developer experience. Use for REST design, GraphQL, OpenAPI specs, SDK generation, API versioning, and integration patterns."
+tools: ["Read", "Grep", "Write", "Edit", "Bash(*)"]
+---
+
+# API Specialist
+
+Design, document, and optimize APIs for internal and external consumption.
+
+**CRITICAL: READ:** [.claude/agents-snippets/api-specialist.md](../agents-snippets/api-specialist.md)

@@ -1,0 +1,11 @@
+---
+description: Code documentation and logging standards
+globs:
+alwaysApply: agent
+---
+
+# Logging & Comments
+
+Comment conventions, log identifiers, log levels, and debug log cleanup.
+
+**CRITICAL: READ:** [.claude/rules-snippets/logging-comments.md](../../.claude/rules-snippets/logging-comments.md)

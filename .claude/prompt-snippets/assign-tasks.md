@@ -1,0 +1,183 @@
+# Create Tickets from Requirements
+
+Parse requirement documents or task breakdown files and create structured tickets in GitHub Issues.
+
+## Usage
+
+```
+/assign-tasks docs/features/requirements.md
+/assign-tasks apps/{{APP_NAME}}/docs/features/{{FEATURE_NAME}}/tasks.md
+```
+
+## Task Consolidation Rules (CRITICAL)
+
+Before creating tickets, consolidate tasks to reduce noise and improve focus:
+
+### Grouping Guidelines
+
+- **Merge related work**: Combine tasks touching the same component or feature area
+- **Bundle by deliverable**: Group by what gets shipped, not individual steps
+- **Collapse small items**: Tasks < 2 story points should be subtasks or merged
+- **Limit hierarchy depth**: Prefer Epic → Story → Task (avoid Subtasks when possible)
+
+### Maximum Ticket Counts
+
+| Feature Size     | Max Stories | Max Tasks/Story | Max Subtasks/Task |
+| ---------------- | ----------- | --------------- | ----------------- |
+| Small (< 8 SP)   | 1-2         | 2-3             | 0                 |
+| Medium (8-21 SP) | 2-4         | 3-4             | 2-4               |
+| Large (21-55 SP) | 4-8         | 4-6             | 4-8               |
+| XL (55+ SP)      | 6-12        | 5-8             | 8-15              |
+
+### Before Creating Tickets, Ask:
+
+1. Can these 2+ tasks be combined into one?
+2. Is this subtask really necessary, or is it just a step?
+3. Would a developer naturally do these together anyway?
+4. Does each ticket represent meaningful, demonstrable progress?
+
+## Issue Tracker Tool Access
+
+> **Full details:** See the `issue-tracker` skill in `.agents/skills/issue-tracker/SKILL.md` for MCP tools reference, CLI fallback strategy, tracker configuration, and epic discovery workflow.
+> For CLI-specific commands, see the matching skill: `.agents/skills/{acli,gh-cli,linear-cli}/SKILL.md`.
+
+When interacting with GitHub Issues, use MCP tools first (see the `issue-tracker` skill for the tools table). If MCP is unavailable, fall back to the CLI skill matching your tracker.
+
+## Process
+
+1. **Parse Document**:
+   - Load the specified document (.md, .txt, .json)
+   - Detect document structure (headers, lists, task categories)
+   - For `tasks.md`, detect the format first:
+     - **Slim** (has `- [ ] T<n>` or `- [x] T<n>` lines): each such line is one task. The text after the ID is the summary. Sub-bullets, if any, are subtasks. A line already has a ticket only when it ends with ` — #<digits>`; skip it then. Any other ` — ` suffix (e.g. ` — depends on T3`) is a note, not a key: keep the line
+     - **Legacy** (no slim lines; has `#{2,4} T<n>` headings, e.g. `## T01`, `### T001`): each `T<n>` heading is one task. Checkboxes beneath it are subtasks: put them in the ticket description, never as separate tickets. Skip a heading that contains `#<digits>` anywhere (e.g. `## T001 (#256): …`); it already has a ticket
+     - **Mixed** (slim lines and legacy headings): treat as slim and say in the report that the headings were ignored
+     - **Neither**: treat as a requirement document
+     - Keys are always `#<digits>` (GitHub issue numbers). Nothing else counts as a key
+   - For requirement documents: extract task hierarchy: Epic → Story → Task → Subtask
+
+2. **Consolidate & Classify** (do this BEFORE creating tickets):
+   - **A slim `tasks.md` from `/tasks` is pre-consolidated**: one line = one ticket. Only merge lines that are clearly one deliverable; do not re-split them
+   - **A legacy `tasks.md` is not pre-consolidated**: one heading = one ticket. Never merge or re-split headings. If the count exceeds the Maximum Ticket Counts, stop and ask before creating anything
+   - **Group related items** by component, feature area, or deliverable
+   - **Merge small tasks** (< 2 SP) into related larger tasks
+   - **Eliminate redundant subtasks** that are obvious steps
+   - **Validate counts** against maximum limits above
+
+3. **Classify Consolidated Tasks**:
+   - **Epic**: Large features, 13+ story points
+   - **Story**: User-focused deliverable, 3-13 story points (prefer larger stories)
+   - **Task**: Implementation work, 2-8 story points (avoid < 2 SP tasks)
+   - **Subtask**: Only for complex tasks needing breakdown, 1-3 story points
+
+4. **Estimate Effort** (`tasks.md` has no effort field: take hours from `plan.md` for the matching work, or estimate from the scope in `spec.md`):
+   - 0.5-1 hours → Merge with related task (too small alone)
+   - 2-3 hours → 2 story points
+   - 4-6 hours → 3-5 story points
+   - 7-12 hours → 8 story points
+   - 13+ hours → 13 story points (consider splitting into stories)
+
+5. **Create Tickets**:
+   - Create in proper hierarchy order (Epics first, then Stories, then Tasks)
+   - Link child issues to parents
+   - Set assignees, labels, and story points
+   - Create dependency links where noted
+   - Ticket description: the task summary plus the acceptance criteria from `spec.md` for that deliverable
+   - **Slim `tasks.md`**: append ` — <KEY>` at the end of the task's line, after any notes (`- [ ] T1 Schema + migration — PROJ-124`)
+   - **Legacy `tasks.md`**: never write back. Record heading → ticket key in the report instead
+
+6. **Generate Report**:
+   - List all created tickets with IDs
+   - **Legacy `tasks.md`**: heading → ticket key mapping, plus headings skipped because they already had a key
+   - Show hierarchy and relationships
+   - Report total story points
+   - **Show consolidation summary**: "Merged X items into Y tickets"
+
+## API Rate Limiting & Throttling
+
+**CRITICAL**: GitHub Issues APIs have rate limits. When creating multiple tickets:
+
+### Batch Strategy
+
+- **Small batches** (< 5 tickets): Create all tickets immediately
+- **Medium batches** (5-15 tickets): Create in groups of 5 with 2-second delays
+- **Large batches** (15+ tickets): Create in groups of 5 with 3-5 second delays
+
+### Implementation Pattern
+
+```
+1. Create Epic(s) first → Wait 2 seconds
+2. Create Stories (batch of 5) → Wait 2 seconds
+3. Create next Stories (batch of 5) → Wait 2 seconds
+4. Create Tasks (batch of 5) → Wait 3 seconds
+5. Continue batching with delays
+```
+
+### Error Handling
+
+- **429 (Rate Limit)**: Wait 10 seconds, then retry
+- **503 (Service Unavailable)**: Wait 5 seconds, then retry
+- **Max retries**: 3 attempts per ticket
+- **Failed tickets**: Report at end with error details
+
+### Progress Reporting
+
+```
+Creating tickets...
+✓ Epic created: PROJ-123
+  [Waiting 2s to avoid rate limiting...]
+✓ Stories created: PROJ-124, PROJ-125, PROJ-126 (batch 1/3)
+  [Waiting 2s...]
+✓ Stories created: PROJ-127, PROJ-128, PROJ-129 (batch 2/3)
+```
+
+### Best Practices
+
+- ⚠️ **Never create more than 5 tickets without a delay**
+- ⚠️ **Always wait at least 2 seconds between batches**
+- ⚠️ **Increase delays if rate limit errors occur**
+- ✓ **Show progress updates between batches**
+- ✓ **Report any failed tickets with retry instructions**
+
+## Anti-Patterns to Avoid
+
+❌ **Don't create separate tickets for**:
+
+- "Create file X" and "Configure file X" (one ticket)
+- "Write tests" and "Run tests" (one ticket)
+- Each individual file change in a feature
+- Steps that take < 1 hour
+
+✅ **Do combine into single tickets**:
+
+- All database work for an entity (model + migration + seeder)
+- Related API endpoints (CRUD operations for one resource)
+- All configuration and setup for a feature
+- Testing for a component (unit + integration)
+
+## Document Format Support
+
+**Legacy `tasks.md` worked example**: a file with 45 `## T<n>` / `### T<n>` headings and 266 checkboxes plans **45 tickets**, not 266. Each ticket's description lists that heading's checkboxes. If 2 headings already carry a `#<digits>` key, plan 43. Do not modify the file; report the heading → key mapping.
+
+**Markdown Headers**:
+
+```markdown
+# Epic: Feature Name
+
+## Story: User Story (combines related implementation)
+
+### Task: Implementation Task (only if story needs breakdown)
+```
+
+**Dependency Keywords**:
+
+- "depends on"
+- "after"
+- "requires"
+- "blocks"
+
+## Configuration
+
+- **Repository**: `ninjasitm/open-sunsama`
+- **Default Assignee**: `@me` (override per run)
+- **Labels**: Based on content categories

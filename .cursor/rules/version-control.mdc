@@ -1,0 +1,11 @@
+---
+description: Version control and commit message standards
+globs:
+alwaysApply: agent
+---
+
+# Version Control
+
+Conventional commit format with ticket references and PR template compliance.
+
+**CRITICAL: READ:** [.claude/rules-snippets/version-control.md](../../.claude/rules-snippets/version-control.md)
